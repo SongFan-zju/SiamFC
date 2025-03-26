@@ -1,5 +1,5 @@
-from backbone import BackBone
-from corr import Corr
+from .backbone import BackBone
+from .corr import Corr
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,7 +12,7 @@ class SiamFC(nn.Module):
         self.backbone = BackBone()
         self.corr = Corr()
 
-    def forward(self, search, template):
+    def forward_backbone(self, template, search):
         search_feature = self.backbone(search)
         template_feature = self.backbone(template)
         # print(search_feature.shape)
@@ -20,10 +20,8 @@ class SiamFC(nn.Module):
         response_map = self.corr(search_feature, template_feature)
         return response_map
 
+    def forward(self, search, template):
+        return self.forward_backbone(search, template)
 
-if __name__ == "__main__":
-    search_tensor = torch.randn(1, 3, 255, 255)
-    template_tensor = torch.randn(1, 3, 127, 127)
-    siamfc = SiamFC()
-    response_map = siamfc(search_tensor, template_tensor)
-    # print(response_map.shape)
+    def head(self, response_map):
+        pass

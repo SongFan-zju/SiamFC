@@ -28,10 +28,10 @@ class BackBone(nn.Module):
 
 
 if __name__ == "__main__":
-    search_tensor = torch.randn(1, 3, 255, 255)
+    search_tensor = torch.randn(1, 3, 239, 239)
     template_tensor = torch.randn(1, 3, 127, 127)
     backbone = BackBone()
     search_feature = backbone(search_tensor)
     template_feature = backbone(template_tensor)
-    print(search_feature.shape)
-    print(template_feature.shape)
+    print(search_feature.shape)  #torch.Size([1, 16, 30, 30])
+    print(template_feature.shape)  #torch.Size([1, 16, 16, 16])
