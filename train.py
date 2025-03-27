@@ -1,32 +1,34 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from utils import _collate_fn, _BCEWeights
 import model
-from dataloader import SiamFCDataset
-import torch.optim as optim
 import torch
-import numpy as np
+from dataloader import SiamFCDataset
+from dataloader.transformer import Transformer
+from utils import _BalancedLoss, _collate_fn, _create_labels
+from torch.utils.data import DataLoader
+import torch.optim as optim
 
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     SiamFC = model.SiamFC().to(device)
     optimizer = optim.Adam(SiamFC.parameters(), lr=1e-3)
-    dataset = SiamFCDataset("data", 1)
-    loss_func = _BCEWeights()
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=_collate_fn)
+    dataset = SiamFCDataset("data", 10, Transformer())
+    dataloader = DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=_collate_fn)
+    loss_func = _BalancedLoss(neg_weight=0.5)
     for epoch in range(500):
         total_loss = 0
-        for search, template, labels, centers in dataloader:
-            search, template, labels = search.to(device), template.to(device), labels.to(device)
-            response_map = SiamFC.forward(search, template)
+        for template, search in dataloader:
             optimizer.zero_grad()
+            template = template.to(device)
+            search = search.to(device)
+            response_map = SiamFC.forward_backbone(template, search)
+            labels = _create_labels(response_map.shape).to(device)
             loss = loss_func(response_map, labels)
             loss.backward()
             optimizer.step()
             total_loss += loss
-        print("Epoch:{}\tLoss:{}".format(epoch, total_loss))
+        print("Epoch:{}\t\tLoss:{}".format(epoch, total_loss))
     torch.save(SiamFC, 'siamfc_full.pth')
 
 

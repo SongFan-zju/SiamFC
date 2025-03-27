@@ -40,8 +40,8 @@ class _BalancedLoss(nn.Module):
         neg_mask = (target == 0)  #相应位置标注为True（0）
         pos_num = pos_mask.sum().float()  #计算True的个数（1）
         neg_num = neg_mask.sum().float()  #计算True的个数（0）
-        weight = target.new_zeros(target.size())  #创建一个大小与target相同的weight
-        weight[pos_mask] = 1 / pos_num
+        weight = target.new_zeros(target.size()).float()  #创建一个大小与target相同的weight
+        weight[pos_mask] = (1.0 / pos_num)
         weight[neg_mask] = 1 / neg_num * self.neg_weight
         weight /= weight.sum()
         #binary_cross_entropy_with_logits等价于sigmod+F.binary_cross_entropy！！！
